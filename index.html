@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Peoject test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+    <style>
+        body {
+            background-color: #EFEDED;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+
+        p {
+            margin: 0px;
+        }
+
+        button {
+            border: none;
+            background-color: #00000000;
+        }
+
+        nav {
+            background-color: #F7F7F7;
+            font-size: 1.25rem;
+            line-height: inherit;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        a {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .formInput {
+            position: relative;
+            display: inline-block;
+        }
+
+        .input {
+            width: 100%;
+            border: 1px solid #00000000;
+            color: #ff0000;
+        }
+
+        .input:active {
+            border: 1px solid #ff0000;
+
+        }
+
+        .icon {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+        }
+
+        .full-screen {
+            min-height: 100vh;
+
+        }
+
+        .todolist-select {
+            font-size: 14px;
+        }
+
+        .todolist-select a.selected {
+            border-color: rgba(175, 47, 47, .2);
+        }
+
+        .border-list {
+            border-top: 1px solid #e6e6e6;
+            box-shadow: 0 0 20px 0 rgba(0, 0, 0, .1);
+        }
+    </style>
+
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+
+
+        function newTask(n) {
+            $('#newatasks').empty();
+            var messageHtml =
+                            `
+                            <div class="text-center p-2" id="loadNewtasks"
+                                style="width: 100%;cursor: pointer; background-color: #E7ECF0;">
+                                New tasks have arrived! (${n})
+                            </div>
+            `;
+
+            $('#newatasks').append(messageHtml);
+        }
+        function renderMessages(maxItems) {
+
+            $('#messageContainer').empty();
+
+
+            var message = []
+
+            const url = 'https://testting-project.hasura.app/v1/graphql';
+            const query = `
+            query MyQuery {
+  tasks {
+    create_at
+    id
+    task
+    user {
+      name
+    }
+  }
+}
+`;
+
+            const adminSecret = 'B2YGmH2X0L2Omy1rrSlPQ2Almvtqp8IKWD8mZsI8wXq626issp4hr7n6EFQdww0p';
+
+            axios.post(url, { query }, {
+                headers: {
+                    'x-hasura-admin-secret': adminSecret
+                }
+            })
+                .then(response => {
+                    console.log("response data:", response.data);
+                    message = response.data.data.tasks
+                    console.log(message[1]);
+                    for (var i = message.length - 1; i >= Math.max(0, message.length - maxItems); i--) {
+                        var msg = message[i];
+                        console.log(msg);
+                        var messageHtml =
+                            `
+            <div class="p-3 d-flex bg-white">
+                <p class="fw-bolder px-2" style="background-color: #DFE3E6;">@${msg.user.name}</p>
+                <span class="pl-2" style="padding-left: 10px;">${msg.task}</span>
+            </div>
+            <div class="border-list"></div>
+            `;
+
+
+                        $('#messageContainer').append(messageHtml);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
+        function readProfile(user_name) {
+
+            $('#Profile').empty();
+            var profilehtml = ` 
+                <span class="px-3">  ${user_name}</span>
+                `
+            $('#Profile').append(profilehtml);
+        }
+
+        $(document).ready(function () {
+            var number_task = 0;
+            var itemsToLoad = 10;
+            var message = []
+
+            var user_name = "Apologizesss"
+            console.log(message);
+            $('#textInput').keypress(function (e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    var inputValue = $(this).val();
+                    // message.push({ name: user_name, text: inputValue });
+                    const url = 'https://testting-project.hasura.app/v1/graphql';
+                    const adminSecret = 'B2YGmH2X0L2Omy1rrSlPQ2Almvtqp8IKWD8mZsI8wXq626issp4hr7n6EFQdww0p';
+
+                    const mutation = `
+  mutation MyMutation {
+    insert_users(objects:[{name: "${user_name}"}]) {
+      returning {
+        id
+        name
+      }
+    }
+  }
+`;
+
+                    axios.post(
+                        url,
+                        { query: mutation },
+                        {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-hasura-admin-secret': adminSecret
+                            }
+                        }
+                    )
+
+
+                        .then(response => {
+                            console.log("Response data:", response.data.data.insert_users.returning[0]);
+                            var userid = response.data.data.insert_users.returning[0].id
+                            console.log(test);
+                            const mutation = `
+  mutation MyMutation {
+    insert_tasks(objects:[{task: "${inputValue}", user_id: "${userid}"}]) {
+      returning {
+        task
+        user_id
+      }
+    }
+  }
+`;
+                            axios.post(
+                                url,
+                                { query: mutation },
+                                {
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'x-hasura-admin-secret': adminSecret
+                                    }
+                                }
+                            )
+                                .then(response => {
+                                    console.log("Response data:", response.data);
+
+                                })
+                                .catch(error => {
+                                    console.error("Error:", error);
+                                });
+                                newTask(number_task)
+
+                        })
+                        .catch(error => {
+                            const query = `
+  query MyQuery {
+    users(where: { name: { _eq: "${user_name}" } }) {
+      id
+    }
+  }
+`;
+                            axios.post(url, { query }, {
+                                headers: {
+                                    'x-hasura-admin-secret': adminSecret
+                                }
+                            })
+                                .then(response => {
+                                    console.log("Response data:", response.data.data.users[0].id);
+                                    const mutation = `
+  mutation MyMutation {
+    insert_tasks(objects:[{task: "${inputValue}", user_id: "${response.data.data.users[0].id}"}]) {
+      returning {
+        task
+        user_id
+      }
+    }
+  }
+`;
+                                    axios.post(
+                                        url,
+                                        { query: mutation },
+                                        {
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'x-hasura-admin-secret': adminSecret
+                                            }
+                                        }
+                                    )
+                                        .then(response => {
+                                            console.log("Response data:", response.data);
+                                        })
+                                        .catch(error => {
+                                            console.error("Error:", error);
+                                        });
+                                        number_task+=1
+                                        newTask(number_task)
+                                })
+                                .catch(error => {
+                                    console.error("Error:", error);
+                                    number_task+=1
+                                    newTask(number_task)
+                                });
+                        });
+
+                    // console.log(message);
+                    $(this).val('');
+                }
+            });
+            renderMessages(10);
+            $('#newatasks').click(function() {
+                number_task = 0
+                newTask(number_task)
+                renderMessages(itemsToLoad);
+                $('#newatasks').empty();
+            });
+
+            $('#loadMoreButton').click(function () {
+                itemsToLoad += 10;
+                renderMessages(itemsToLoad);
+            });
+            readProfile(user_name)
+            $('#inputProfile').keypress(function (e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    var inputValue = $(this).val();
+                    user_name = inputValue
+                    $(this).val('');
+                }
+                readProfile(user_name)
+            });
+        });
+    </script>
+    <nav>
+        <div class="py-2 px-1 d-flex align-items-start">
+            <div class="p-2 flex-grow-1 ">GraphQL Tutorial App</div>
+            <button type="button" class=" py-2 btn btn-primary mx-5 fw-normal">Log out<svg class="mx-1"
+                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                    style="fill: rgb(255, 255, 255); --darkreader-inline-fill: #e8e6e3;" data-darkreader-inline-fill="">
+                    <path d="M16 13v-2H7V8l-5 4 5 4v-3z"></path>
+                    <path
+                        d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z">
+                    </path>
+                </svg></button>
+        </div>
+    </nav>
+    <div>
+        <div class="row ">
+            <div class="col-9 border-end">
+                <div class="row">
+                    <div class="col full-screen" style="padding: 35px; font-size: 18px; background-color: #F6F6F6;">
+                        <p class="py-3">Personal todos</p>
+                        <div class="shadow">
+                            <form class="formInput"
+                                style="width: 100%; border-bottom: 1px solid #FCFCFC; font-size: 14px; ">
+                                <span class="icon">
+                                    <svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24"
+                                        style="fill: rgb(152, 154, 156); --darkreader-inline-fill: #e8e6e3; font-weight: 500;"
+                                        data-darkreader-inline-fill="">
+                                        <path
+                                            d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z">
+                                        </path>
+                                    </svg>
+                                </span>
+                                <input class="input py-3 px-5" placeholder="What needs to be done?" value="">
+                            </form>
+                            <div class="border-list"></div>
+                            <!-- for loop -->
+
+                        </div>
+
+                        <div class="p-3 d-flex  todolist-select justify-content-center shadow "
+                            style="width: 100%; background-color: #FFFFFF;">
+                            <span class="" style="margin-right: 6px;"> 0 items</span>
+                            <div class="flex-grow-1">
+                                <a class="selected p-2">All</a>
+                                <a class="selected p-2">Active</a>
+                                <a class="selected p-2">Completed</a>
+                            </div>
+                            <button class=" clear-compo text-black-50">Clear Completed</button>
+                        </div>
+                        <div class="border-list"></div>
+                        <div class="border-list"></div>
+                        <div class="border-list"></div>
+                    </div>
+                    <div class="col full-screen"
+                        style="padding: 35px; font-size: 18px; background-color: #EFEDED;  overflow-y: auto;">
+                        <p class="py-3">Public feed (realtime)</p>
+                        <div class="shadow" style="font-size: 14px;">
+                            <form class="formInput text-success" style="width: 100%; border-bottom: 1px solid #e6e6e6;">
+                                <span class="icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        style="fill: rgb(152, 154, 156); --darkreader-inline-fill: #e8e6e3;"
+                                        data-darkreader-inline-fill="">
+                                        <path
+                                            d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z">
+                                        </path>
+                                    </svg>
+                                </span>
+                                <input id="textInput" class="input py-3 px-5" placeholder="What needs to be done?"
+                                    value="" style="background-color: #F9F8F8;color: #000;">
+                            </form>
+                            <div class="border-list"></div>
+
+                            <!-- new message -->
+
+
+                            <!-- end new message -->
+                            <!-- for loop -->
+                            <div id="newatasks"></div>
+                            <div id="messageContainer"></div>
+                            <!-- endloop -->
+                            <div class="text-center p-2" id="loadMoreButton"
+                                style="width: 100%;cursor: pointer; background-color: #E7ECF0;">
+                                Load older tasks
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="" style="padding: 35px; font-size: 14px;">
+                    <p class="py-3" style="font-weight: 600;"> ONLINE USERS - 1 </p>
+                    <span style="font-weight: 600;"> Change your name </span>
+                    <form class="formInput text-success py-2" style="width: 100%;">
+                        <span class="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                style="fill: rgb(152, 154, 156); --darkreader-inline-fill: #e8e6e3;"
+                                data-darkreader-inline-fill="">
+                                <path d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z">
+                                </path>
+                            </svg>
+                        </span>
+                        <input id="inputProfile" class="input py-2 px-5" placeholder="Change your name ..." value=""
+                            style="background-color: #F9F8F8;color: #000;">
+                    </form>
+                    <div class="d-flex px-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            style="fill: rgb(0, 0, 0); --darkreader-inline-fill: #e8e6e3;"
+                            data-darkreader-inline-fill="">
+                            <path
+                                d="M12 2c-4.963 0-9 4.038-9 9v8h.051c.245 1.691 1.69 3 3.449 3 1.174 0 2.074-.417 2.672-1.174a3.99 3.99 0 0 0 5.668-.014c.601.762 1.504 1.188 2.66 1.188 1.93 0 3.5-1.57 3.5-3.5V11c0-4.962-4.037-9-9-9zm7 16.5c0 .827-.673 1.5-1.5 1.5-.449 0-1.5 0-1.5-2v-1h-2v1c0 1.103-.897 2-2 2s-2-.897-2-2v-1H8v1c0 1.845-.774 2-1.5 2-.827 0-1.5-.673-1.5-1.5V11c0-3.86 3.141-7 7-7s7 3.14 7 7v7.5z">
+                            </path>
+                            <circle cx="9" cy="10" r="2"></circle>
+                            <circle cx="15" cy="10" r="2"></circle>
+                        </svg>
+                        <div id="Profile"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
